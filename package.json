@@ -33,7 +33,8 @@
     "prove": "tsx scripts/scrambler-prove.ts",
     "battery": "tsx scripts/scrambler-battery-liaison.ts",
     "leak-rate": "tsx scripts/scrambler-leak-rate.ts",
-    "casefile": "tsx scripts/scrambler-casefile.ts"
+    "casefile": "tsx scripts/scrambler-casefile.ts",
+    "panel": "tsx bin/panel.ts"
   },
   "peerDependencies": {
     "@ai-sdk/openai": ">=4",
