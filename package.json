@@ -27,6 +27,8 @@
   },
   "scripts": {
     "test": "node --import tsx --test tests/*.test.ts",
+    "scramble": "tsx bin/scramble.ts",
+    "unscramble": "tsx bin/unscramble.ts",
     "typecheck": "tsc --noEmit",
     "prove": "tsx scripts/scrambler-prove.ts",
     "battery": "tsx scripts/scrambler-battery-liaison.ts",

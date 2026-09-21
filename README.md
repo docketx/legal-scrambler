@@ -74,6 +74,23 @@ LIAISON_MODEL=local/qwen3:8b npm run battery     # measure the model's own leak 
 cannot send a client document to an upstream provider. `LOCAL_LLM_BASE_URL` defaults to
 `http://127.0.0.1:11434`.
 
+## Command line
+
+```sh
+export SCRAMBLER_MASTER_KEY=$(node -e 'console.log(require("node:crypto").randomBytes(32).toString("base64"))')
+export LIAISON_MODEL=local/qwen3:8b                      # your Ollama model; nothing else is accepted
+
+npm run -s scramble -- --matter smith-v-smith --stats < petition.txt > petition.scrambled.txt
+#   ... send petition.scrambled.txt to any model; it holds [PERSON_1], [SSN_1], never the facts ...
+npm run -s unscramble -- --matter smith-v-smith < answer.txt > answer.restored.txt          # names back into the answer
+npm run -s unscramble -- --matter smith-v-smith --mode document < petition.scrambled.txt    # the original, byte-exact
+```
+
+The same `--matter` keeps the same placeholders across every document of a case. `--regex-only` works without a
+model (SSNs, phones, emails, accounts, addresses by shape) and says on stderr that names are not found that way.
+Exit codes: 3 store not configured, 4 refused to release / not restorable, 5 unknown placeholders left as-is (listed
+on stderr, never guessed). The sealed store lives under `data/store/` (`SCRAMBLER_DATA_DIR` to move it).
+
 ## Use it as a library
 
 ```ts
