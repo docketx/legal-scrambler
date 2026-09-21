@@ -1,0 +1,71 @@
+{
+  "name": "@docketx/legal-scrambler",
+  "version": "0.1.0",
+  "description": "Pseudonymise legal case files on your own hardware before a frontier model sees them, and restore the answer byte-exact. A local model proposes spans; code does every substitution in both directions.",
+  "license": "Apache-2.0",
+  "repository": "github:docketx/legal-scrambler",
+  "homepage": "https://github.com/docketx/legal-scrambler#readme",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./apply": "./src/apply.ts",
+    "./battery": "./src/battery.ts",
+    "./graph": "./src/graph.ts",
+    "./guard": "./src/guard.ts",
+    "./liaison": "./src/liaison.ts",
+    "./measure": "./src/measure.ts",
+    "./normalize": "./src/normalize.ts",
+    "./orchestrate": "./src/orchestrate.ts",
+    "./patterns": "./src/patterns.ts",
+    "./store": "./src/store.ts",
+    "./types": "./src/types.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "prove": "tsx scripts/scrambler-prove.ts",
+    "battery": "tsx scripts/scrambler-battery-liaison.ts",
+    "leak-rate": "tsx scripts/scrambler-leak-rate.ts",
+    "casefile": "tsx scripts/scrambler-casefile.ts"
+  },
+  "peerDependencies": {
+    "@ai-sdk/openai": ">=4",
+    "@openrouter/ai-sdk-provider": ">=3",
+    "ai": ">=7"
+  },
+  "peerDependenciesMeta": {
+    "@ai-sdk/openai": {
+      "optional": true
+    },
+    "@openrouter/ai-sdk-provider": {
+      "optional": true
+    },
+    "ai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ai-sdk/openai": "^4.0.71",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "@types/node": "^26.2.0",
+    "ai": "^7.0.77",
+    "tsx": "^4.23.12",
+    "typescript": "^5"
+  },
+  "keywords": [
+    "legal",
+    "pseudonymization",
+    "anonymization",
+    "pii",
+    "llm",
+    "privacy",
+    "ollama",
+    "prompt-injection",
+    "e-discovery"
+  ]
+}

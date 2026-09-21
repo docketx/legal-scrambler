@@ -1,0 +1,12 @@
+node_modules/
+*.tsbuildinfo
+.env*
+.DS_Store
+
+# Real court dockets used by the P4 proof (public RECAP filings, ~38 MB, real litigants' names). Not shipped in
+# the repo: fetch them yourself (scripts/scrambler-casefile.ts header) and the proof test picks them up.
+data/dockets/
+data/proof-dockets.json
+
+# The encrypted matter store and cache (store.ts). Never commit a graph, even sealed.
+data/store/
