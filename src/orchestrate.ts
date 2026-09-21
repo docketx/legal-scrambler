@@ -194,9 +194,13 @@ export function deepseekFlash(opts: { apiKey?: string | null; timeoutMs?: number
     const { generateText, tool, jsonSchema } = await import("ai");
     type Schema = Parameters<typeof jsonSchema>[0];
     const tools = Object.fromEntries(toolSchemas.map((s) => [s.name, tool({ description: s.description, inputSchema: jsonSchema(s.inputSchema as Schema) })]));
+    // ai v7: a system message may not travel in `messages`; it goes in `instructions`. Measured 2026-09-21 on the
+    // first live run: "System messages are not allowed in the prompt or messages fields. Use the instructions option".
+    const instructions = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
     const r = await generateText({
       model: resolveModel(id, opts.apiKey, { title: "DocketRouter Scrambler" }),
-      messages: toModelMessages(messages),
+      ...(instructions ? { instructions } : {}),
+      messages: toModelMessages(messages.filter((m) => m.role !== "system")),
       ...(toolSchemas.length ? { tools } : {}),
       temperature: 0,
       maxOutputTokens: opts.maxOutputTokens ?? 1_500,
