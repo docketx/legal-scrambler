@@ -134,6 +134,28 @@ thing that writes. Every invariant above is a test that plays one of those attac
 
 ## Open law to go with it
 
-The frontier step is only worth taking if the model can ground its answer in real law. DocketX publishes
-public-domain legal corpora on Hugging Face — [huggingface.co/docketx](https://huggingface.co/docketx) — and a
-free, keyless citation-existence check at `POST https://docketrouter.ai/api/public/citation-check`.
+The frontier step is only worth taking if the model can ground its answer in real law, and nothing here is
+tied to one jurisdiction. DocketX publishes public-domain legal corpora on Hugging Face —
+[huggingface.co/docketx](https://huggingface.co/docketx) — free to pull, CC0 where the underlying law is
+public domain:
+
+| dataset | what it holds |
+|---|---|
+| `docketx/us-caselaw-<st>` × 51 | full text of state appellate opinions, all 50 states + DC — **6,658,834 opinions** |
+| `docketx/us-caselaw-scotus`, `-fed-appellate`, `-fed-district`, … | the federal tiers |
+| `docketx/us-statutes` | **1,295,620 sections across 28 jurisdictions** — 27 states plus the complete United States Code |
+| `docketx/court-rules` | **21,062 court rules**, verbatim |
+| `docketx/us-pro-se` | **12,103 official self-help guides, instructions and court forms** from 19 state court systems |
+
+Plus two things that need no key at all:
+
+- `POST https://docketrouter.ai/api/public/citation-check` — does this reporter citation exist? Answers
+  `found` or `unverified`, never "fabricated".
+- `GET https://docketrouter.ai/api/v1/contracts/rules?jurisdiction=<st>&clause=<family>` — **601 verified
+  contract-law rules with 2,846 authorities across 28 jurisdictions**, each rule carrying the question it
+  answers, the rule, the trap, and every authority with a verbatim quote re-checked against the corpus
+  above. An uncovered jurisdiction returns an empty list rather than another state's law.
+
+**Which jurisdictions the panel's retrieval tool searches is configuration, not a property of this library.**
+`httpTools({ sources })` or `DOCKETROUTER_RAG_SOURCES` pins the set; point it at a library that serves more
+and it searches more.

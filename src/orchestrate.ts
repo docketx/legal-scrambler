@@ -53,8 +53,17 @@ export type OrchestrateResult = {
 
 export const DEFAULT_MAX_STEPS = 6;
 export const FRONTIER_MODEL_ID = "deepseek/deepseek-v4-flash";
-/** The only sources the frontier's retrieval tool may search: public law. Pinned here, not chosen by the model. */
-export const PUBLIC_LAW_SOURCES = ["statutes", "tx"] as const;
+/** The sources the frontier's retrieval tool may search: public law only, pinned by the CALLER, never chosen by the
+ *  model — a model that could pick its own sources could pick one that is not public law. Which jurisdictions those
+ *  names cover is a property of the server you point at, not of this library: pass `sources` to httpTools(), or set
+ *  DOCKETROUTER_RAG_SOURCES (comma-separated), to search whatever that server serves. The default is the public-law
+ *  set DocketRouter itself serves today. */
+export const PUBLIC_LAW_SOURCES = ["statutes", "scotus", "tx", "tx-rules"] as const;
+export const publicLawSources = (override?: readonly string[]): string[] => {
+  if (override?.length) return [...override];
+  const env = (process.env.DOCKETROUTER_RAG_SOURCES ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return env.length ? env : [...PUBLIC_LAW_SOURCES];
+};
 
 /** Thrown when a message or a tool argument bound for the frontier contains a matter alias. The message carries
  *  the count and the location, never the alias — the ledger records values nowhere, and an error string is a log. */
@@ -83,7 +92,7 @@ export function assertNoAliases(value: unknown, graph: MatterGraph, where: strin
 export const TOOL_SCHEMAS: Record<string, ToolSchema> = {
   rag_query: {
     name: "rag_query",
-    description: "Search public Texas law — statutes and Texas appellate opinions — and return the top passages with their citations. Use it to ground any legal proposition before you state it. This searches published law only; it knows nothing about the parties in this matter.",
+    description: "Search published public law — statutes, court rules and appellate opinions — and return the top passages with their citations. Which jurisdictions are searched depends on the library this is pointed at; ask for the jurisdiction you need in the query and read the citations that come back rather than assuming coverage. Use it to ground any legal proposition before you state it. This searches published law only; it knows nothing about the parties in this matter.",
     inputSchema: { type: "object", properties: { q: { type: "string", description: "The legal question or proposition to search for, in plain words. Do not include placeholders like [CLIENT_1]; describe the issue generically." }, k: { type: "integer", minimum: 1, maximum: MAX_K, description: "How many passages to return (default 5)." } }, required: ["q"], additionalProperties: false },
   },
   citations_check: {
@@ -158,8 +167,9 @@ export async function answerScrambled(opts: { question: string; scrambled: strin
 
 /* ── Default tools: the two public-law endpoints over HTTP ──────────────────────────────────────────────────────
  * Both wrap routes that themselves wrap library calls, so a tool call and the matching REST call return the same
- * answer. Sources for retrieval are pinned to PUBLIC_LAW_SOURCES here and are not an argument the model can set. */
-export function httpTools(opts: { baseUrl?: string; apiKey?: string; timeoutMs?: number; fetchFn?: typeof fetch } = {}): ToolSet {
+ * answer. Sources for retrieval are pinned by the caller (publicLawSources) and are never an argument the model can
+ * set; which jurisdictions they cover is the server's business, not this library's. */
+export function httpTools(opts: { baseUrl?: string; apiKey?: string; timeoutMs?: number; fetchFn?: typeof fetch; sources?: readonly string[] } = {}): ToolSet {
   const base = (opts.baseUrl ?? process.env.DOCKETROUTER_BASE_URL ?? "https://docketrouter.ai").replace(/\/+$/, "");
   const key = opts.apiKey ?? process.env.DOCKETROUTER_API_KEY;
   const f = opts.fetchFn ?? fetch;
@@ -171,7 +181,7 @@ export function httpTools(opts: { baseUrl?: string; apiKey?: string; timeoutMs?:
   };
   const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => { const n = Math.floor(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt; };
   return {
-    rag_query: (a) => post("/api/v1/rag/query", { q: String(a.q ?? "").slice(0, 600), k: clampInt(a.k, 1, MAX_K, 5), sources: [...PUBLIC_LAW_SOURCES] }),
+    rag_query: (a) => post("/api/v1/rag/query", { q: String(a.q ?? "").slice(0, 600), k: clampInt(a.k, 1, MAX_K, 5), sources: publicLawSources(opts.sources) }),
     citations_check: (a) => {
       const cites = (Array.isArray(a.citations) ? a.citations : [a.citations]).filter((c): c is string => typeof c === "string" && c.trim().length > 0).slice(0, MAX_CITATIONS);
       return cites.length ? post("/api/v1/citations/check", { citations: cites }) : Promise.resolve({ error: "citations must be a non-empty array of strings" });
