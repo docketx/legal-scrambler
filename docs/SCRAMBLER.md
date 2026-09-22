@@ -103,7 +103,7 @@ makes the model useful.
 
 ## First live runs — one fixture, not a leak rate
 
-Real `qwen3:8b` on mini1, reached through prod's own reverse tunnel, both passes, on the test fixture (a
+Real `qwen3:8b` on the corpus host, reached through prod's own reverse tunnel, both passes, on the test fixture (a
 short pleading paragraph carrying an SSN, DOB, docket, email, phone, four people, two firms, a cited case, a
 statute section and an injected "ignore all previous instructions" line). Local model, $0.
 
@@ -207,7 +207,7 @@ and the chunk went out regex-only with eight secrets in it. Folding is now per s
 
 ### The battery against the real liaison — the "before" reading (2026-09-15, code at `361b3d401`)
 
-`scripts/scrambler-battery-liaison.ts` runs the same 167 documents through **qwen3:8b on mini1** over prod's
+`scripts/scrambler-battery-liaison.ts` runs the same 167 documents through **qwen3:8b on the corpus host** over prod's
 tunnel, 4k chunks, and scores every planted secret by type. This is the model's number, not the pipeline's:
 
 | | secrets | leaked | per 1,000 | Wilson 95% |
@@ -274,7 +274,7 @@ generator noise in the ground truth (a bare city typed ADDRESS, "In re …" type
 ATTORNEY) is filtered from the truth since `61052eced`. The fourth reading is not claimed until it runs.
 
 **Fourth reading, 2026-09-20, code `f662b5d26`, same 167 documents, same `local/qwen3:8b`, 4,000-char chunks with
-200 overlap, run from the Mac over an ssh tunnel to the model on mini1 (`scripts/scrambler-battery-liaison.ts`,
+200 overlap, run from the Mac over an ssh tunnel to the model on the corpus host (`scripts/scrambler-battery-liaison.ts`,
 checkpointed per document; no transport exclusions, no model degradation):**
 
 | | third `68fa845d5` | **fourth `f662b5d26`** |
@@ -318,7 +318,7 @@ result. The fifth reading is not claimed until it runs.
 
 "We need to pull more dockets and stress test our ability to actually swap out entire case files." The synthetic
 battery is one filing at a time; a matter is 8–60 filings under one graph. `scripts/scrambler-docket-pull.py`
-(runs on quasar; robots.txt first) pulls real federal case files from the RECAP mirror on archive.org —
+(runs on a harvest box; robots.txt first) pulls real federal case files from the RECAP mirror on archive.org —
 `collection:usfederalcourts`, 247,425 Southern District of Texas items — keeping only items whose
 `docket.json` (CourtListener's own export) carries the parties, attorneys and judges: **that list is the typed
 ground truth**, not ours. `scripts/scrambler-casefile.ts` runs every filing through one graph, then the
@@ -375,7 +375,7 @@ defined-term owners are names, column merges end at the case change, name tokens
 **Live model on real case files (qwen3:8b, first two dockets):** 22 filings, 390k characters, **0 of 17
 ground-truth entities leaked, 14 of 14 entities on one placeholder, 118 of 118 chunks byte-exact, 0 of 28
 citations lost, 2 filings refused** — in **6,111 s** of model time, ~16 s per 1,000 characters. The tunnel to
-mini1 dropped after the second docket and the other eight were excluded as transport, never scored as leaks;
+the corpus host dropped after the second docket and the other eight were excluded as transport, never scored as leaks;
 they re-run behind a supervised tunnel. Speed, not leakage, is what the live number says about an 8B liaison on
 a whole case file.
 
@@ -393,9 +393,9 @@ its agencies are. The same filing showed two false addresses — "1 Dr. Margaret
 before an honorific) and "…21\nSt. Paul Mercury" (a table-of-contents page number before a cited party): a
 number straight before a street type, with no street name and no city tail, is not an address. Both are lesson
 XIV in the unit suite; 212 tests. The fifth proof run states the new denominator: 0 of 1,566 (from 1,585).
-The first live run's remaining dockets were stopped and re-launched on this commit **on jtf-prod**, which
-reaches mini1's Ollama on its own loopback (the Mac's own network dropped the tunnel 237 times in the hour
-after midnight; every dropped call left an orphaned generation queued on mini1, and a trivial prompt took 41 s
+The first live run's remaining dockets were stopped and re-launched on this commit **on the production box**, which
+reaches the corpus host's Ollama on its own loopback (the Mac's own network dropped the tunnel 237 times in the hour
+after midnight; every dropped call left an orphaned generation queued on the corpus host, and a trivial prompt took 41 s
 until the Mac run was stopped). The harness retries a chunk three times and excludes the docket as transport,
 never as a leak; the retry line now prints the reason ("aborted due to timeout", "fetch failed").
 
@@ -455,7 +455,7 @@ of Delgado) with "Rudy" the node's nickname alias: the substitution reached "Rud
 run: a bare surname joined the first of three Speers before the others arrived (the join needs an un-join), and
 "Christopher D. Johnson" / "Christopher Donald Johnson" sit apart (a middle initial against a middle name).
 
-**First live docket on the box (`059031afd`, qwen3:8b on jtf-prod, Shurb v. UT Health):** 28 filings, 347k
+**First live docket on the box (`059031afd`, qwen3:8b on the production box, Shurb v. UT Health):** 28 filings, 347k
 characters released, **1 of 12 ground-truth entities leaked** (ATTORNEY 1 of 4: "Drew L. Harris"), 11 of 11
 entities on one placeholder, 73 of 74 reporter citations kept, 105 of 105 chunks byte-exact, **3 filings refused**
 (all "TABLE OF AUTHORITIES"/"Cases"-class OTHER prose, refused by the guard since lesson XX), 5,831 s of model
@@ -618,7 +618,7 @@ frontier writes `[CLIENT_1]'s` on its own and the renderer handles it.
   XXXI (`2aadfeef1`): a short-form cite and "the X Court" (X a case name elsewhere in the text) are public law in the
   one caption rule the guard, the substitution and the gate share, and a volume-and-reporter span is always a
   citation piece; a real person who shares the case name is still scrubbed outside the citations. 236 tests.
-- **First live docket on the new pipeline (Shurb, `cb3fe921c`, qwen3:8b on jtf-prod, finished 2026-09-16 18:30
+- **First live docket on the new pipeline (Shurb, `cb3fe921c`, qwen3:8b on the production box, finished 2026-09-16 18:30
   UTC).** Against the same docket on `059031afd`:
 
   | | before (`059031afd`) | after (`cb3fe921c`) |
@@ -688,7 +688,7 @@ frontier writes `[CLIENT_1]'s` on its own and the renderer handles it.
   not a figure to publish. The harness now also reports an occurrence-level rate (a name mentioned fifty times
   weighs fifty), its own interval, and an over-scrub proxy (capitalised phrases that vanished and were not
   ground-truth names) — the measurement gaps the review called the strongest section. The earlier single-opinion run, for the record:
-- **One opinion, before the cap:** `qwen3:8b` on mini1 through prod's tunnel, 4k-char
+- **One opinion, before the cap:** `qwen3:8b` on the corpus host through prod's tunnel, 4k-char
   chunks, 2026-09-15: opinion 25-0461, **12 of 12 ground-truth names present, 2 leaked, 0 of 7 citations lost**,
   one chunk degraded on a 400 s timeout on both attempts — in **37 minutes** (2,213 s). Three further opinions
   in the same run never reached the model (the tunnel dropped; every chunk `fetch failed` in under half a
@@ -738,7 +738,7 @@ were *"encrypted and private and scrambled"*, and each is a tested property, not
 Today: files under `data/scrambler/` on the host that runs the liaison. Because every envelope is encrypted under
 a key that exists only on that host — derived per owner and matter from a master key that never leaves the
 process environment — **the storage medium does not need to be trusted**. Moving the envelopes to Postgres
-(windmayor) or Contabo S3 changes durability and backup, not confidentiality: an S3 bucket full of `s1:` envelopes
+(a central Postgres box) or Contabo S3 changes durability and backup, not confidentiality: an S3 bucket full of `s1:` envelopes
 is opaque without the master key, and the master key must never be stored next to them. The right split is
 S3 for the long-term graph (the matter's memory, small, must survive a box), a local cache for scrambled
 documents (large, regenerable), and the master key in the environment or a secret manager only. `store.ts` keeps
@@ -782,11 +782,11 @@ endpoint / cache system."* Sized from what has been measured, not guessed:
   cache hit, then by the matter's privacy class, then by queue depth — and says which tier answered.
 - **Not built:** the queue, the workers, the tier selector, any rented compute. **No spend without the founder.**
 
-## Deployment readiness, measured on jtf-prod 2026-09-20
+## Deployment readiness, measured on the production box 2026-09-20
 
 The gate below says the routes need two things on the host. One of them is already there. Measured, not assumed:
 
-| Prerequisite | On jtf-prod | Evidence |
+| Prerequisite | On the production box | Evidence |
 |---|---|---|
 | `LIAISON_MODEL` = a `local/*` id | **set** | `local/qwen3:8b` |
 | a local model that actually answers | **yes** | `LOCAL_LLM_BASE_URL=http://127.0.0.1:11436/v1`; `/api/tags` 200 and six models loaded; `qwen3:8b` returned `ok`, `done_reason stop`, in 3.95s |

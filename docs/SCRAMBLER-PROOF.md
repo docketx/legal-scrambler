@@ -1,6 +1,6 @@
 # Scrambler proof run — 2026-09-20
 
-**ALL CLAIMS HOLD** at commit `96fed4da2` — 242 tests passed, 0 failed, 16.1 min wall on Zachs-MacBook-Air.local (Apple M4). Parameters: fuzz seeds 1000, real dockets 40, restore documents 167. Produced by `scripts/scrambler-prove.ts`; no model was called -- this is the proof of the pipeline. The local model's measured leak rates are in docs/SCRAMBLER.md and are not claims.
+**ALL CLAIMS HOLD** at commit `96fed4da2` — 242 tests passed, 0 failed, 16.1 min wall on an Apple M4 laptop. Parameters: fuzz seeds 1000, real dockets 40, restore documents 167. Produced by `scripts/scrambler-prove.ts`; no model was called -- this is the proof of the pipeline. The local model's measured leak rates are in docs/SCRAMBLER.md and are not claims.
 
 | | suite | claim | pass / fail | time |
 |---|---|---|---|---|
